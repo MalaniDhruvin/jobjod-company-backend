@@ -63,17 +63,11 @@ exports.updateCompany = async (req, res) => {
   const { userId } = req.params;  // Extract userId from the request params
   const {
     companyName,
-    interviewerName,
-    email,
-    phone,
     location,
-    yearEst,
-    website,
-    pincode,
   } = req.body;
 
   try {
-    const company = await Company.findOne({ userId });
+    const company = await Company.findOne({ where: { userId: userId } });
 
     if (!company) {
       return res.status(404).json({ message: "Company not found" });
@@ -81,13 +75,7 @@ exports.updateCompany = async (req, res) => {
 
     // Update company details
     company.companyName = companyName || company.companyName;
-    company.interviewerName = interviewerName || company.interviewerName;
-    company.email = email || company.email;
-    company.phone = phone || company.phone;
     company.location = location || company.location;
-    company.yearEst = yearEst || company.yearEst;
-    company.website = website || company.website;
-    company.pincode = pincode || company.pincode;
 
     // Save the updated company
     await company.save();

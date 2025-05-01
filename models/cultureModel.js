@@ -20,15 +20,15 @@ const Culture = sequelize.define(
       onUpdate: "CASCADE", // Adjust based on your requirements
     },
     companyEnvironment: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     employeeBenefits: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     careerDevelopment: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
   },

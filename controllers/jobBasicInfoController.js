@@ -28,17 +28,100 @@ exports.getJobById = async (req, res) => {
   }
 };
 
+// controllers/jobController.js
+// controllers/jobController.js
+
 exports.updateJob = async (req, res) => {
   try {
-    const job = await JobBasicInfo.findOne(req.params.id);
-    if (!job) return res.status(404).json({ message: "Job not found" });
+    // 1) Find the existing record
+    const job = await JobBasicInfo.findByPk(req.params.id);
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
 
-    await job.update(req.body);
-    res.status(200).json({ message: "Job updated successfully", job });
+    // 2) Whitelist and collect updatable fields
+    const updatable = {};
+    if (req.body.jobTitle   !== undefined) updatable.jobTitle   = req.body.jobTitle;
+    if (req.body.expiryTime !== undefined) updatable.expiryTime = req.body.expiryTime;
+    if (req.body.minSalary  !== undefined) updatable.minSalary  = req.body.minSalary;
+    if (req.body.maxSalary  !== undefined) updatable.maxSalary  = req.body.maxSalary;
+
+    // 3) Apply everything *except* createdAt via update()
+    if (Object.keys(updatable).length) {
+      await job.update(updatable);
+    }
+
+    // 4) Handle createdAt specially
+    if (req.body.createdAt !== undefined) {
+      // convert incoming ISO or timestamp string to a Date
+      const newCreatedAt = new Date(req.body.createdAt);
+      job.setDataValue('createdAt', newCreatedAt);
+      // `silent: true` tells Sequelize not to bump updatedAt
+      await job.save({ silent: true });
+    }
+
+    // 5) Return the fresh record
+    return res
+      .status(200)
+      .json({ message: "Job updated successfully", job });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error updating job:", error);
+    return res.status(500).json({ error: error.message });
   }
 };
+
+
+// controllers/jobController.js
+
+exports.updateInterviewPerson = async (req, res) => {
+  let { interviewPersons } = req.body;
+  // interviewPersons should be an array of objects: [{ name, ... }, ...]
+
+  if (!Array.isArray(interviewPersons)) {
+    return res
+      .status(400)
+      .json({ message: 'interviewPersons must be an array' });
+  }
+
+  // Extract only the `name` field from each object
+  const namesArray = interviewPersons.reduce((acc, entry, idx) => {
+    if (entry && typeof entry.name === 'string' && entry.name.trim()) {
+      acc.push(entry.name.trim());
+    } else {
+      console.warn(`Skipping invalid entry at index ${idx}:`, entry);
+    }
+    return acc;
+  }, []);
+
+  if (namesArray.length === 0) {
+    return res
+      .status(400)
+      .json({ message: 'No valid names provided' });
+  }
+
+  try {
+    const job = await JobBasicInfo.findByPk(req.params.id);
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    // Update the column that stores an array of names
+    await job.update({ interviewPersons: namesArray });
+
+    // Respond with the names array that was saved
+    return res
+      .status(200)
+      .json({ 
+        message: 'Interview persons updated', 
+        interviewPersons: job 
+      });
+  } catch (error) {
+    console.error('Error updating interviewPersons:', error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+
 
 exports.deleteJob = async (req, res) => {
   try {

@@ -28,17 +28,72 @@ exports.getJobDescriptionById = async (req, res) => {
     }
 };
 
-exports.updateJobDescription = async (req, res) => {
-    try {
-        const jobDescription = await JobDescription.findByPk(req.params.id);
-        if (!jobDescription) return res.status(404).json({ message: "Job description not found" });
+// controllers/jobDescriptionController.js
 
-        await jobDescription.update(req.body);
-        res.status(200).json({ message: "Job description updated successfully", jobDescription });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+exports.updateJobDescription = async (req, res) => {
+  const { skills, responsibility } = req.body;
+  
+  // Validate inputs
+  if (skills !== undefined && !Array.isArray(skills)) {
+    return res
+      .status(400)
+      .json({ message: "`skills` must be an array of strings" });
+  }
+  if (responsibility !== undefined && 
+      !(typeof responsibility === 'string' || Array.isArray(responsibility))
+  ) {
+    return res
+      .status(400)
+      .json({ message: "`responsibility` must be a string or an array of strings" });
+  }
+
+  try {
+    // 1) Find the JobDescription row by PK
+    const jd = await JobDescription.findByPk(req.params.id);
+    if (!jd) {
+      return res.status(404).json({ message: "Job description not found" });
     }
+
+    // 2) Build update payload
+    const updates = {};
+
+    if (skills !== undefined) {
+      // uses your setter to join with commas
+      updates.skills = skills;
+    }
+    if (responsibility !== undefined) {
+      // if array, join to CSV; if string, leave as-is
+      updates.responsibility = Array.isArray(responsibility)
+        ? responsibility.join(',')
+        : responsibility;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res
+        .status(400)
+        .json({ message: "No updatable fields provided" });
+    }
+
+    // 3) Apply updates
+    await jd.update(updates);
+
+    // 4) Read back and return the current getters
+    return res.status(200).json({
+      message: "Job description updated successfully",
+      data: {
+        id: jd.id,
+        skills: jd.skills,             // array from getter
+        responsibility: jd.responsibility
+          ? jd.responsibility.split(',')
+          : []
+      }
+    });
+  } catch (err) {
+    console.error("Error updating job description:", err);
+    return res.status(500).json({ error: err.message });
+  }
 };
+
 
 exports.deleteJobDescription = async (req, res) => {
     try {

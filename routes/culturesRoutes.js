@@ -10,7 +10,7 @@ const {
 const authMiddleware = require("../middleware/authMiddleware"); // Use the authentication middleware
 
 // Create a new culture
-router.post("/", authMiddleware, createCulture);
+router.post("/", createCulture);
 
 // Get all cultures
 router.get("/", authMiddleware, getAllCultures);

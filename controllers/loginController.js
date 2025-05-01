@@ -12,7 +12,7 @@ exports.createLogin = async (req, res) => {
 
     // If the login exists and OTP matches
     if (login && otp === process.env.OTP) {
-      const token = jwt.sign({ loginId: login.id }, process.env.JWT_SECRET, {
+      const token = jwt.sign({ userId: login.id }, process.env.JWT_SECRET, {
         expiresIn: "2h",
       });
       return res.status(200).json({
@@ -26,7 +26,7 @@ exports.createLogin = async (req, res) => {
     if (!login) {
       login = await CompanyLogin.create({ mobileNumber });
       if (login && otp === process.env.OTP) {
-        const token = jwt.sign({ loginId: login.id }, process.env.JWT_SECRET, {
+        const token = jwt.sign({ userId: login.id }, process.env.JWT_SECRET, {
           expiresIn: "2h",
         });
         return res.status(200).json({

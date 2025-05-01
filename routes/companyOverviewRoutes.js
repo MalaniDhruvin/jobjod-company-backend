@@ -9,7 +9,6 @@ const authMiddleware = require("../middleware/authMiddleware"); // Use the authe
 // Global CRUD operations for Company Overview
 router.post(
   "/",
-  authMiddleware,
   companyOverviewController.createCompanyOverview
 );
 
