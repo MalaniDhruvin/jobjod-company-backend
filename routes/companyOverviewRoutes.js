@@ -5,8 +5,8 @@ const authMiddleware = require("../middleware/authMiddleware"); // Use the authe
 
 // Debug: Log the controller to ensure it's loaded
 // console.log("Loaded companyOverviewController:", companyOverviewController);
-
 // Global CRUD operations for Company Overview
+
 router.post(
   "/",
   companyOverviewController.createCompanyOverview

@@ -11,7 +11,6 @@ router.post(
 router.get("/", authMiddleware, candidateRequirementController.getRequirements);
 router.get(
   "/:id",
-  authMiddleware,
   candidateRequirementController.getRequirementById
 );
 router.put(

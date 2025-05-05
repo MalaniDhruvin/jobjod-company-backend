@@ -23,7 +23,7 @@ exports.getAllCultures = async (req, res) => {
 // Get single Culture for editing
 exports.getCulture = async (req, res) => {
   try {
-    const culture = await Culture.findOne({
+    const culture = await Culture.findAll({
       where: { userId: req.params.userId }, // Use user_id instead of id
     });
     if (!culture) {
@@ -58,16 +58,39 @@ exports.updateCulture = async (req, res) => {
 
 // Delete Culture
 exports.deleteCulture = async (req, res) => {
+  const { field } = req.query;
+  const allowed = ['companyEnvironment','employeeBenefits','careerDevelopment'];
+  if (!allowed.includes(field)) {
+    return res.status(400).json({ message: `Invalid field. Must be one of: ${allowed.join(', ')}` });
+  }
+
   try {
-    const deleted = await Culture.destroy({
-      where: { id: req.params.id },
-    });
-    if (deleted) {
-      res.status(200).json({ message: "Culture deleted" });
-    } else {
-      res.status(404).json({ message: "Culture not found" });
+    const culture = await Culture.findByPk(req.params.id);
+    if (!culture) {
+      return res.status(404).json({ message: 'Culture not found' });
     }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+
+    // Set that one column to empty string (or null, if you prefer)
+    await culture.update({ [field]: '' });
+
+    // Rebuild your front-end-friendly array
+    const result = [];
+    if (culture.companyEnvironment) {
+      result.push({ id: 1, title: 'Company Environment', content: culture.companyEnvironment });
+    }
+    if (culture.employeeBenefits) {
+      result.push({ id: 2, title: 'Employee Benefits', content: culture.employeeBenefits });
+    }
+    if (culture.careerDevelopment) {
+      result.push({ id: 3, title: 'Career Development', content: culture.careerDevelopment });
+    }
+
+    return res.status(200).json({
+      message: `Cleared ${field}`,
+      data: result
+    });
+  } catch (err) {
+    console.error('Error clearing culture field:', err);
+    return res.status(500).json({ message: err.message });
   }
 };

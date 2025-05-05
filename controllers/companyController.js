@@ -58,6 +58,21 @@ exports.getCompany = async (req, res) => {
   }
 };
 
+exports.getAllCompany = async (req, res) => {
+
+  try {
+    const company = await Company.findAll();
+
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    res.status(200).json(company);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Update company details by userId
 exports.updateCompany = async (req, res) => {
   const { userId } = req.params;  // Extract userId from the request params

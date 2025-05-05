@@ -32,7 +32,7 @@ exports.getAllCompanyOverviews = async (req, res) => {
 exports.getCompanyOverviewById = async (req, res) => {
   try {
     const company = await CompanyOverview.findOne({
-      where: { userId: req.params.userId }, // Use user_id instead of id
+      where: { id:req.params.userId }, // Use user_id instead of id
     });
     if (!company)
       return res.status(404).json({ message: "Company overview not found" });

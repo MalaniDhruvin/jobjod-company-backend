@@ -1,4 +1,5 @@
 const { JobBasicInfo } = require("../models/jobBasicInfoModel");
+const { Op, fn, col, where } = require('sequelize');
 
 exports.createJob = async (req, res) => {
   try {
@@ -69,6 +70,48 @@ exports.updateJob = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+// controllers/jobController.js
+
+exports.findByTitle = async (req, res) => {
+  try {
+    const title = req.params.title;
+    console.log('Title from URL-param:', title);
+
+    if (!title) {
+      return res.status(400).json({
+        message: 'Path parameter `title` is required',
+      });
+    }
+
+    // 1) Fetch all rows
+    const allJobs = await JobBasicInfo.findAll({
+      order: [['createdAt', 'DESC']],
+    });
+
+    // 2) In JS, parse the JSON column and filter
+    const matching = allJobs.filter((job) => {
+      try {
+        const parsed = typeof job.jobTitle === 'string'
+          ? JSON.parse(job.jobTitle)
+          : job.jobTitle;
+        return parsed.label === title;
+      } catch (e) {
+        return false;
+      }
+    });
+
+    if (!matching.length) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    return res.json(matching);
+  } catch (err) {
+    console.error('Error fetching jobs by title:', err);
+    return res.status(500).json({ message: 'Failed to fetch jobs' });
+  }
+};
+
 
 
 // controllers/jobController.js

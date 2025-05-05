@@ -106,3 +106,52 @@ exports.deleteJobDescription = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.matchUserSkills = async (req, res) => {
+  const { userSkills } = req.body;
+
+  console.log("User skills:", userSkills);
+  if (!Array.isArray(userSkills)) {
+    return res
+      .status(400)
+      .json({ message: "`userSkills` must be an array of strings" });
+  }
+
+  const userSkillSet = new Set(
+    userSkills
+      .filter((s) => typeof s === "string")
+      .map((s) => s.trim().toLowerCase())
+  );
+
+  console.log("User skill set:", userSkillSet);
+
+  try {
+    const jobDescriptions = await JobDescription.findAll();
+
+    // console.log("Job descriptions:", jobDescriptions);
+
+    const results = jobDescriptions.map((jd) => {
+      const required = Array.isArray(jd.skills)
+        ? jd.skills.map((s) => s.trim().toLowerCase())
+        : [];
+
+      // count how many required skills the user has
+      const matchCount = required.filter((skill) =>
+        userSkillSet.has(skill)
+      ).length;
+
+      // if two or more match, it's a "yes"
+      const atLeastTwo = matchCount >= 1;
+
+      return {
+        jobId: jd.id,
+        match: atLeastTwo ? "yes" : "no",
+      };
+    });
+
+    return res.status(200).json(results);
+  } catch (error) {
+    console.error("Error matching user skills:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
